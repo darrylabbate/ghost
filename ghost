@@ -1,0 +1,137 @@
+#!/bin/bash +e
+#
+# Author: Darryl Abbate
+# https://github.com/rootbeersoup/ghost
+#
+# All-in-one Homebrew maintenance script
+# - Installs Homebrew if missing
+# - Installs packages from global Brewfile (~/.Brewfile)
+# - Updates formulae
+# - Upgrades existing packages
+# - Cleans up formulae
+
+BUNDLELOG=$(mktemp /tmp/ghost.bundle.check.XXXXXXXX)
+INSTALLLOG=$(mktemp /tmp/ghost.bundle.install.XXXXXXXX)
+UPDATELOG=$(mktemp /tmp/ghost.update.XXXXXXXX)
+UPGRADELOG=$(mktemp /tmp/ghost.upgrade.XXXXXXXX)
+CLEANUPLOG=$(mktemp /tmp/ghost.cleanup.XXXXXXXX)
+
+CHECKMARK="\\033[32m✓\\033[0m"
+CLEARLINE="\\033[2K"
+ERRORMSG="\\033[31mERROR:\\033[0m"
+SPINDELAY="0.05"
+SPINSTR="⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+
+# Exit quickly if run on something other than macOS
+if ! [[ "$(uname -s)" == "Darwin" ]]; then
+  printf "${ERRORMSG} macOS required to use Homebrew\\n"
+  exit 1
+fi
+
+# Spinner function
+spinner() 
+{
+  local PROCESS=$1
+  local POSTMSG=$2
+
+  while :; do
+    jobs %1 &> /dev/null
+    [[ "$?" = 0 ]] ||
+    {
+      printf "${CLEARLINE}${CHECKMARK} ${POSTMSG}\\n"
+      break
+    }
+    for (( i=0; i<${#SPINSTR}; i++ )); do
+      sleep "${SPINDELAY}"
+      printf "${CLEARLINE}${SPINSTR:$i:1} ${PROCESS}\\r"
+    done
+  done
+}
+
+# Hanging spinner for commands preceding if statements
+# Must be followed by else statement with proper `printf` message
+spinner_hang() 
+{
+  local PROCESS=$1
+
+  while :; do
+    jobs %1 &> /dev/null
+    [[ "$?" = 0 ]] ||
+    {
+      printf "${CLEARLINE}"
+      break
+    }
+    for (( i=0; i<${#SPINSTR}; i++ )); do
+      sleep "${SPINDELAY}"
+      printf "${CLEARLINE}${SPINSTR:$i:1} ${PROCESS}\\r"
+    done
+  done
+}
+
+# trap function for 0 exit codes
+finish ()
+{
+  tput cnorm
+  exit 0
+}
+
+# trap function for user interrupts
+interrupt ()
+{
+  printf "\\n\\033[31m✗\\033[0m User interrupt; terminating...\\n"
+  tput cnorm
+  exit 2
+}
+
+# Clean up upon 0 exit status
+trap finish 0
+
+# Clean up upon user interrupt (CTRL+C)
+trap interrupt 2
+
+# Install Homebrew if not already installed
+if ! [[ -x "$(command -v brew)" ]]; then 
+  printf "Homebrew not found on this system; Installing...\\n"
+  /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+fi
+
+tput civis
+
+# Brew Bundle
+brew_bundle()
+{
+  # Skip brew bundle if no Brewfile found
+  if ! [[ -f "$HOME/.Brewfile" ]]; then
+    printf "${ERRORMSG} Global Brewfile not found (~/.Brewfile).\\n       Skipping \`brew bundle\`...\\n"
+  else
+    # Run `brew bundle check` since it's quicker than `brew bundle`
+    # For whatever reason, `bundle check` always returns "missing dependencies" unless using the `--verbose` flag
+    (brew bundle check --global --verbose > "${BUNDLELOG}") &
+    spinner_hang "Check Brewfile for missing packages" 
+
+    # Run `brew bundle` if `check` returns missing dependencies
+    if [[ "$(grep missing "${BUNDLELOG}" &> /dev/null; echo "$?")" -eq 0 ]]; then
+      brew bundle --global > "${INSTALLLOG}" &
+      spinner "Install missing packages" "New packages installed"
+    else
+      printf "${CLEARLINE}${CHECKMARK} Packages already installed\\n"
+    fi
+  fi
+}
+
+brew_bundle
+
+# Update
+(brew update > "${UPDATELOG}") &
+spinner "Update Homebrew formulae" "Formulae up-to-date"
+
+# Upgrade
+(brew upgrade --display-times > "${UPGRADELOG}") &
+spinner "Upgrade existing Homebrew packages" "Packages upgraded"
+
+# Cleanup
+(brew cleanup > "${CLEANUPLOG}") &
+spinner "Clean up Homebrew formulae" "Squeaky clean"
+
+# Done
+printf "${CHECKMARK} Done 🍺\\n"
