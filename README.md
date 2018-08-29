@@ -1,10 +1,10 @@
-# ghost
+# Ghost
 
-Maintain your Homebrew setup with a single command while filtering unwanted stdout impurities
+Maintain your Homebrew setup with a single command while redirecting unwanted command-line output to the shadow realm.
 
 ## Objective
 
-The goal is to filter Homebrew's typical output from regular maintenance commands (`bundle`, `update`, `upgrade`, etc). Ghost aims to keep output informative while being concise and beautiful. The output should be equally functional whether you're staring at your terminal window or walking away from it entirely.
+The ghoul is to filter Homebrew's typical output from regular maintenance commands (`bundle`, `update`, `upgrade`, etc). Ghost aims to keep output informative while being cute and concise. The output should be equally functional whether you're staring at your terminal window or walking away from it entirely.
 
 ## Installation
 
@@ -12,15 +12,15 @@ The goal is to filter Homebrew's typical output from regular maintenance command
 make
 ```
 
-Make simply copies the script to `/usr/local/bin`. `make uninstall` will likewise remove it.
+Make simply copies `broo` to `/usr/local/bin`. `make uninstall` will likewise remove it.
 
 ## Usage
 
 ```bash
-ghost
+broo
 ```
 
-The script assumes you're using a global Brewfile, which would be located `~/.Brewfile`. Running `brew bundle dump --global` places the file there. `ghost` otherwise skips `brew bundle` ands runs normally.
+The scrypt assumes you're using a global Brewfile, which would be located `~/.Brewfile`. Running `brew bundle dump --global` places the file there. `broo` otherwise skips `brew bundle` ands runs normally.
 
 ## To-Do
 * Leverage temp logfiles to redirect default output for stdout parsing

@@ -6,7 +6,7 @@ SHELL       := /bin/bash
 all: install
 
 install:
-	cp ghost $(INSTALL_DIR)
+	cp broo $(INSTALL_DIR)
 
 uninstall:
-	rm $(INSTALL_DIR)/ghost
+	rm $(INSTALL_DIR)/broo
