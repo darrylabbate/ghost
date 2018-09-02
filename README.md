@@ -24,4 +24,3 @@ The scrypt assumes you're using a global Brewfile, which would be located `~/.Br
 
 ## To-Do
 * Detect if script is erroneously sourced; Prompt user and exit safely.
-* Print summary of installed/upgraded packages, as well as any errors.

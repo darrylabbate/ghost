@@ -12,21 +12,13 @@
 
 BUNDLELOG=$(mktemp /tmp/ghost.bundle.check.XXXXXXXX)
 INSTALLLOG=$(mktemp /tmp/ghost.bundle.install.XXXXXXXX)
-UPDATELOG=$(mktemp /tmp/ghost.update.XXXXXXXX)
 UPGRADELOG=$(mktemp /tmp/ghost.upgrade.XXXXXXXX)
-CLEANUPLOG=$(mktemp /tmp/ghost.cleanup.XXXXXXXX)
 
 CHECKMARK="\\033[32m✓\\033[0m"
 CLEARLINE="\\033[2K"
 ERRORMSG="\\033[31mERROR:\\033[0m"
 SPINDELAY="0.05"
 SPINSTR="⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
-
-# Exit quickly if run on something other than macOS
-if ! [[ "$(uname -s)" == "Darwin" ]]; then
-  printf "${ERRORMSG} macOS required to use Homebrew\\n"
-  exit 1
-fi
 
 # Spinner function
 spinner() 
@@ -69,34 +61,35 @@ spinner_hang()
 }
 
 # trap function for 0 exit codes
-finish ()
+finish()
 {
   tput cnorm
-  find /tmp/ -empty -name "ghost.*" | xargs rm
   exit 0
 }
 
 # trap function for user interrupts
-interrupt ()
+interrupt()
 {
   printf "\\n\\033[31m✗\\033[0m User interrupt; terminating...\\n"
   tput cnorm
   exit 2
 }
 
-# Clean up upon 0 exit status
-trap finish 0
+print_install_log()
+{
+  local INSTALLEDPKGS=$(cat ${INSTALLLOG} | grep -i installing | awk '{print $2}')
 
-# Clean up upon user interrupt (CTRL+C)
-trap interrupt 2
+  printf "\\nInstalled packages:\\n"
+  printf "${INSTALLEDPKGS}\\n"
+}
 
-# Install Homebrew if not already installed
-if ! [[ -x "$(command -v brew)" ]]; then 
-  printf "Homebrew not found on this system; Installing...\\n"
-  /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-fi
+print_upgrade_log()
+{
+  local UPGSUMMARY=$(cat ${UPGRADELOG} | awk 'FNR == 2 {print}' | sed $'s/, /\\\n/g' | column -t)
 
-tput civis
+  printf "\\nUpgraded packages:\\n"
+  printf "${UPGSUMMARY}\\n"
+}
 
 # Brew Bundle
 brew_bundle()
@@ -120,20 +113,56 @@ brew_bundle()
   fi
 }
 
+main()
+{
+  # Clean up upon 0 exit status
+  trap finish 0
 
-# Update
-(brew update > "${UPDATELOG}") &
-spinner "Update Homebrew formulae" "Formulae up-to-date"
+  # Clean up upon user interrupt (CTRL+C)
+  trap interrupt 2
 
-# Upgrade
-(brew upgrade --display-times > "${UPGRADELOG}") &
-spinner "Upgrade existing Homebrew packages" "Packages upgraded"
+  # Exit quickly if run on something other than macOS
+  if ! [[ "$(uname -s)" == "Darwin" ]]; then
+    printf "${ERRORMSG} macOS required to use Homebrew\\n"
+    exit 1
+  fi
 
-brew_bundle
+  # Install Homebrew if not already installed
+  if ! [[ -x "$(command -v brew)" ]]; then 
+    printf "Homebrew not found on this system; Installing...\\n"
+    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+  fi
 
-# Cleanup
-(brew cleanup > "${CLEANUPLOG}") &
-spinner "Clean up Homebrew formulae" "Squeaky clean"
+  tput civis
 
-# Done
-printf "${CHECKMARK} Done 🍺\\n"
+  # Update
+  (brew update &> /dev/null) &
+  spinner "Update Homebrew formulae" "Formulae up-to-date"
+
+  # Upgrade
+  (brew upgrade --display-times > "${UPGRADELOG}") &
+  spinner "Upgrade existing Homebrew packages" "Packages upgraded"
+
+  brew_bundle
+
+  # Cleanup
+  # (brew cleanup &> /dev/null) &
+  # spinner "Clean up" "Squeaky clean"
+
+  # Done
+  printf "${CHECKMARK} Done 🍺\\n"
+
+  find /tmp/ -empty -name "ghost.*" | xargs rm
+  rm ${BUNDLELOG}
+
+  if [[ -f ${INSTALLLOG} ]]; then
+    print_install_log
+    rm ${INSTALLLOG}
+  fi
+  if [[ -f ${UPGRADELOG} ]]; then
+    print_upgrade_log
+    rm ${UPGRADELOG}
+  fi
+}
+
+main
