@@ -146,8 +146,8 @@ main()
   brew_bundle
 
   # Cleanup
-  # (brew cleanup &> /dev/null) &
-  # spinner "Clean up" "Squeaky clean"
+  (brew cleanup &> /dev/null) &
+  spinner "Clean up" "Squeaky clean"
 
   # Done
   printf "${CHECKMARK} Done 🍺\\n"
