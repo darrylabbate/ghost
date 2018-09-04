@@ -10,6 +10,8 @@
 # - Upgrades existing packages
 # - Cleans up formulae
 
+# shellcheck disable=SC2059
+
 BUNDLELOG=$(mktemp /tmp/ghost.bundle.check.XXXXXXXX)
 INSTALLLOG=$(mktemp /tmp/ghost.bundle.install.XXXXXXXX)
 OUTDATEDLOG=$(mktemp /tmp/ghost.outdated.XXXXXXXX)
@@ -25,8 +27,11 @@ SPINSTR="⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
 # Spinner function
 spinner() 
 {
-  local PROCESS=$1
-  local POSTMSG=$2
+  local PROCESS
+  local POSTMSG
+
+  PROCESS=$1
+  POSTMSG=$2
 
   while :; do
     jobs %1 &> /dev/null
@@ -36,7 +41,7 @@ spinner()
       break
     }
     for (( i=0; i<${#SPINSTR}; i++ )); do
-      sleep "${SPINDELAY}"
+      sleep "$SPINDELAY"
       printf "${CLEARLINE}${SPINSTR:$i:1} ${PROCESS}\\r"
     done
   done
@@ -46,7 +51,9 @@ spinner()
 # Must be followed by else statement with proper `printf` message
 spinner_hang() 
 {
-  local PROCESS=$1
+  local PROCESS
+
+  PROCESS=$1
 
   while :; do
     jobs %1 &> /dev/null
@@ -56,7 +63,7 @@ spinner_hang()
       break
     }
     for (( i=0; i<${#SPINSTR}; i++ )); do
-      sleep "${SPINDELAY}"
+      sleep "$SPINDELAY"
       printf "${CLEARLINE}${SPINSTR:$i:1} ${PROCESS}\\r"
     done
   done
@@ -79,7 +86,9 @@ interrupt()
 
 print_install_log()
 {
-  local INSTALLEDPKGS=$(cat ${INSTALLLOG} | grep -i installing | awk '{print $2}')
+  local INSTALLEDPKGS
+  
+  INSTALLEDPKGS=$(grep -i installing "$INSTALLLOG" | awk '{print $2}')
 
   printf "\\nInstalled packages:\\n"
   printf "${INSTALLEDPKGS}\\n"
@@ -87,7 +96,9 @@ print_install_log()
 
 print_upgrade_log()
 {
-  local UPGSUMMARY=$(cat ${UPGRADELOG} | awk 'FNR == 2 {print}' | sed $'s/, /\\\n/g' | column -t)
+  local UPGSUMMARY
+  
+  UPGSUMMARY=$(awk 'FNR == 2 {print}' "$UPGRADELOG" | sed $'s/, /\\\n/g' | column -t)
 
   printf "\\nUpgraded packages:\\n"
   printf "${UPGSUMMARY}\\n"
@@ -102,35 +113,36 @@ brew_bundle()
   else
     # Run `brew bundle check` since it's quicker than `brew bundle`
     # For whatever reason, `bundle check` always returns "missing dependencies" unless using the `--verbose` flag
-    (brew bundle check --global --verbose > "${BUNDLELOG}") &
+    (brew bundle check --global --verbose > "$BUNDLELOG") &
     spinner_hang "Check Brewfile for missing packages" 
 
     # Run `brew bundle` if `check` returns missing dependencies
-    if [[ "$(grep missing ${BUNDLELOG} &> /dev/null; echo "$?")" -eq 0 ]]; then
-      (brew bundle --global > "${INSTALLLOG}") &
+    if [[ $(grep missing "$BUNDLELOG" &> /dev/null; echo $?) -eq 0 ]]; then
+      (brew bundle --global > "$INSTALLLOG") &
       spinner "Install missing packages" "New packages installed"
     fi
+    rm "$BUNDLELOG"
   fi
 }
 
 brew_update()
 {
-  (brew update > "${UPDATELOG}") &
+  (brew update > "$UPDATELOG") &
   spinner_hang "Update Homebrew formulae"
 
-  if [[ "$(wc -l ${UPDATELOG} | awk '{print $1}')" -ge "2" ]]; then
+  if [[ $(wc -l "$UPDATELOG" | awk '{print $1}') -ge "2" ]]; then
     printf "${CLEARLINE}${CHECKMARK} Formulae updated\\n"
-    rm ${UPDATELOG}
   fi
+  rm "$UPDATELOG"
 }
 
 brew_upgrade()
 {
-  (brew outdated > "${OUTDATEDLOG}") &
+  (brew outdated > "$OUTDATEDLOG") &
   spinner_hang "Check for available upgrades"
 
-  if [[ -s "${OUTDATEDLOG}" ]]; then
-    (brew upgrade --display-times > "${UPGRADELOG}") &
+  if [[ -s "$OUTDATEDLOG" ]]; then
+    (brew upgrade --display-times > "$UPGRADELOG") &
     spinner "Upgrade existing Homebrew packages" "Packages upgraded"
   fi
 }
@@ -173,17 +185,16 @@ main()
   # Done
   printf "${CLEARLINE}${CHECKMARK} Homebrew up-to-date 🍺\\n"
 
-  find /tmp/ -empty -name "ghost.*" | xargs rm
-  rm ${BUNDLELOG}
+  find /tmp/ -empty -name "ghost.*" -delete
 
-  if [[ -f ${INSTALLLOG} ]]; then
+  if [[ -f "$INSTALLLOG" ]]; then
     print_install_log
-    rm ${INSTALLLOG}
+    rm "$INSTALLLOG"
   fi
-  if [[ -f ${UPGRADELOG} ]]; then
+  if [[ -f "$UPGRADELOG" ]]; then
     print_upgrade_log
-    rm ${OUTDATEDLOG}
-    rm ${UPGRADELOG}
+    rm "$OUTDATEDLOG"
+    rm "$UPGRADELOG"
   fi
 }
 
