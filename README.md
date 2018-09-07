@@ -23,4 +23,10 @@ broo
 The scrypt assumes you're using a global Brewfile, which would be located `~/.Brewfile`. Running `brew bundle dump --global` places the file there. `broo` otherwise skips `brew bundle` ands runs normally.
 
 ## To-Do
-* Detect if script is erroneously sourced; Prompt user and exit safely.
+
+- [ ] Detect if script is erroneously sourced; Prompt user and exit safely.
+
+## License
+
+Source code: [MIT](./LICENSE)
+Documentation and images: [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
