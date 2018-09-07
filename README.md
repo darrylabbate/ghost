@@ -29,4 +29,5 @@ The scrypt assumes you're using a global Brewfile, which would be located `~/.Br
 ## License
 
 Source code: [MIT](./LICENSE)
+
 Documentation and images: [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
