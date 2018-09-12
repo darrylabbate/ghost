@@ -84,9 +84,8 @@ print_install_log()
 {
   local INSTALLEDPKGS
   
-  INSTALLEDPKGS=$(grep -i installing "$INSTALLLOG" | awk '{print $2}')
+  INSTALLEDPKGS=$(grep -i installing "$INSTALLLOG" | awk '{print "  \033[34m|\033[0m "$2}')
 
-  printf "\\nInstalled packages:\\n"
   printf "${INSTALLEDPKGS}\\n"
 }
 
@@ -94,9 +93,8 @@ print_upgrade_log()
 {
   local UPGSUMMARY
   
-  UPGSUMMARY=$(awk 'FNR == 2 {print}' "$UPGRADELOG" | sed $'s/, /\\\n/g' | column -t)
+  UPGSUMMARY=$(awk 'FNR == 2 {print}' "$UPGRADELOG" | sed $'s/, /\\\n/g' | column -t | awk '{print "  \033[34m|\033[0m "$0}')
 
-  printf "\\nUpgraded packages:\\n"
   printf "${UPGSUMMARY}\\n"
 }
 
@@ -116,6 +114,8 @@ brew_bundle()
     if [[ $(grep missing "$BUNDLELOG" &> /dev/null; echo $?) -eq 0 ]]; then
       (brew bundle --global > "$INSTALLLOG") &
       spinner "Install missing packages" "New packages installed"
+      print_install_log
+      rm "$INSTALLLOG"
     fi
     rm "$BUNDLELOG"
   fi
@@ -140,6 +140,9 @@ brew_upgrade()
   if [[ -s "$OUTDATEDLOG" ]]; then
     (brew upgrade --display-times > "$UPGRADELOG") &
     spinner "Upgrade existing Homebrew packages" "Packages upgraded"
+    print_upgrade_log
+    rm "$OUTDATEDLOG"
+    rm "$UPGRADELOG"
   fi
 }
     
@@ -182,16 +185,6 @@ main()
   printf "${CLEARLINE}${CHECKMARK} Homebrew up-to-date 🍺\\n"
 
   find /tmp/ -empty -name "ghost.*" -delete
-
-  if [[ -f "$INSTALLLOG" ]]; then
-    print_install_log
-    rm "$INSTALLLOG"
-  fi
-  if [[ -f "$UPGRADELOG" ]]; then
-    print_upgrade_log
-    rm "$OUTDATEDLOG"
-    rm "$UPGRADELOG"
-  fi
 }
 
 main
