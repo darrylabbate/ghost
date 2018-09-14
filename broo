@@ -84,7 +84,7 @@ print_install_log()
 {
   local INSTALLEDPKGS
   
-  INSTALLEDPKGS=$(grep -i installing "$INSTALLLOG" | awk '{print "  \033[34m|\033[0m "$2}')
+  INSTALLEDPKGS=$(grep -i installing "$INSTALLLOG" | awk '{print "\033[34m|\033[0m "$2}')
 
   printf "${INSTALLEDPKGS}\\n"
 }
@@ -93,7 +93,7 @@ print_upgrade_log()
 {
   local UPGSUMMARY
   
-  UPGSUMMARY=$(awk 'FNR == 2 {print}' "$UPGRADELOG" | sed $'s/, /\\\n/g' | column -t | awk '{print "  \033[34m|\033[0m "$0}')
+  UPGSUMMARY=$(awk 'FNR == 2 {print}' "$UPGRADELOG" | sed $'s/, /\\\n/g' | column -t | awk '{print "\033[34m|\033[0m "$0}')
 
   printf "${UPGSUMMARY}\\n"
 }
