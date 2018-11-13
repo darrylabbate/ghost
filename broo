@@ -12,6 +12,8 @@
 
 # shellcheck disable=SC2059
 
+GHOST_VERSION="0.1.3"
+
 BUNDLELOG=$(mktemp /tmp/ghost.bundle.check.XXXXXXXX)
 INSTALLLOG=$(mktemp /tmp/ghost.bundle.install.XXXXXXXX)
 OUTDATEDLOG=$(mktemp /tmp/ghost.outdated.XXXXXXXX)
@@ -23,6 +25,11 @@ CLEARLINE="\\033[2K"
 ERRORMSG="\\033[31mERROR:\\033[0m"
 SPINDELAY="0.05"
 SPINSTR="⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+
+print_info()
+{
+  printf "ghost v%s\\n" "${GHOST_VERSION}"
+}
 
 # Spinner function
 spinner() 
@@ -187,4 +194,8 @@ main()
   find /tmp/ -empty -name "ghost.*" -delete
 }
 
-main
+if [[ "$1" ]]; then
+  print_info
+else
+  main
+fi
