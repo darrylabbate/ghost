@@ -36,7 +36,6 @@ spinner()
 {
   local PROCESS
   local POSTMSG
-
   PROCESS=$1
   POSTMSG=$2
 
@@ -59,7 +58,6 @@ spinner()
 spinner_hang() 
 {
   local PROCESS
-
   PROCESS=$1
 
   while :; do
@@ -89,11 +87,10 @@ interrupt()
 
 print_install_log()
 {
-  local INSTALLEDPKGS
-  
-  INSTALLEDPKGS=$(grep -i installing "$INSTALLLOG" | awk '{print "\033[34m|\033[0m "$2}')
-
-  printf "${INSTALLEDPKGS}\\n"
+  awk '
+    tolower($0) ~ /installing/ { 
+      print "\033[34m|\033[0m " $2
+    }' "$INSTALLLOG"
 }
 
 print_upgrade_log()
@@ -155,11 +152,8 @@ brew_upgrade()
     
 main()
 {
-  # Clean up upon 0 exit status
-  trap finish 0
-
-  # Clean up upon user interrupt (CTRL+C)
-  trap interrupt 2
+  trap finish    0 # Clean up upon 0 exit status
+  trap interrupt 2 # Clean up upon user interrupt (CTRL+C)
 
   # Exit quickly if run on something other than macOS
   if ! [[ "$(uname -s)" == "Darwin" ]]; then
@@ -175,13 +169,8 @@ main()
 
   tput civis
 
-  # Update
   brew_update
-
-  # Upgrade
   brew_upgrade
-
-  # Bundle
   brew_bundle
 
   # Cleanup
