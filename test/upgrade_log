@@ -1,0 +1,36 @@
+==> Upgrading 2 outdated packages:
+go 1.11.2 -> 1.11.3, cmake 3.13.1 -> 3.13.2
+==> Upgrading go 
+==> Downloading https://homebrew.bintray.com/bottles/go-1.11.3.mojave.bottle.tar.gz
+==> Pouring go-1.11.3.mojave.bottle.tar.gz
+==> Caveats
+A valid GOPATH is required to use the `go get` command.
+If $GOPATH is not specified, $HOME/go will be used by default:
+  https://golang.org/doc/code.html#GOPATH
+
+You may wish to add the GOROOT-based install location to your PATH:
+  export PATH=$PATH:/usr/local/opt/go/libexec/bin
+==> Summary
+🍺  /usr/local/Cellar/go/1.11.3: 9,287 files, 404.1MB
+==> Upgrading cmake 
+==> Downloading https://homebrew.bintray.com/bottles/cmake-3.13.2.mojave.bottle.tar.gz
+==> Pouring cmake-3.13.2.mojave.bottle.tar.gz
+==> Caveats
+Emacs Lisp files have been installed to:
+  /usr/local/share/emacs/site-lisp/cmake
+==> Summary
+🍺  /usr/local/Cellar/cmake/3.13.2: 5,542 files, 50.6MB
+==> Caveats
+==> go
+A valid GOPATH is required to use the `go get` command.
+If $GOPATH is not specified, $HOME/go will be used by default:
+  https://golang.org/doc/code.html#GOPATH
+
+You may wish to add the GOROOT-based install location to your PATH:
+  export PATH=$PATH:/usr/local/opt/go/libexec/bin
+==> cmake
+Emacs Lisp files have been installed to:
+  /usr/local/share/emacs/site-lisp/cmake
+==> Installation times
+go                       71.364 s
+cmake                    15.633 s
