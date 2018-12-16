@@ -167,7 +167,7 @@ main()
   # Done
   printf "${CLEARLINE}${CHECKMARK} Homebrew up-to-date 🍺\\n"
 
-  find /tmp/ -maxdepth 0 -empty -name "ghost.*" -delete
+  find /tmp/ -maxdepth 1 -empty -name "ghost.*" -delete
 }
 
 if [[ "$1" ]]; then
