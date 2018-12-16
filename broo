@@ -12,7 +12,7 @@
 
 # shellcheck disable=SC2059
 
-GHOST_VERSION="0.1.3"
+GHOST_VERSION="0.1.3.1"
 
 BUNDLELOG=$(mktemp /tmp/ghost.bundle.check.XXXXXXXX)
 INSTALLLOG=$(mktemp /tmp/ghost.bundle.install.XXXXXXXX)
@@ -32,6 +32,8 @@ print_info()
 }
 
 # Spinner function
+# Supply only one string as an argument to overlay succeeding spinner message on top
+# Else supply a second string to display beside a checkmark when process completes
 spinner() 
 {
   local PROCESS
@@ -39,30 +41,15 @@ spinner()
   PROCESS=$1
   POSTMSG=$2
 
-  while :; do
-    jobs %1 &> /dev/null
-    [[ "$?" = 0 ]] ||
-    {
-      printf "${CLEARLINE}${CHECKMARK} ${POSTMSG}\\n"
+  while true; do
+    if jobs %1 &> /dev/null; then
+      true
+    else
+      if [[ "$POSTMSG" ]]; then
+        printf "${CLEARLINE}${CHECKMARK} ${POSTMSG}\\n"
+      fi
       break
-    }
-    for (( i=0; i<${#SPINSTR}; i++ )); do
-      sleep "$SPINDELAY"
-      printf "${CLEARLINE}${SPINSTR:$i:1} ${PROCESS}\\r"
-    done
-  done
-}
-
-# Hanging spinner for commands preceding if statements
-# Must be followed by else statement with proper `printf` message
-spinner_hang() 
-{
-  local PROCESS
-  PROCESS=$1
-
-  while :; do
-    jobs %1 &> /dev/null
-    [[ "$?" = 0 ]] || break
+    fi
     for (( i=0; i<${#SPINSTR}; i++ )); do
       sleep "$SPINDELAY"
       printf "${CLEARLINE}${SPINSTR:$i:1} ${PROCESS}\\r"
@@ -112,7 +99,7 @@ brew_bundle()
     # Run `brew bundle check` since it's quicker than `brew bundle`
     # For whatever reason, `bundle check` always returns "missing dependencies" unless using the `--verbose` flag
     (brew bundle check --global --verbose > "$BUNDLELOG") &
-    spinner_hang "Check Brewfile for missing packages" 
+    spinner "Check Brewfile for missing packages" 
 
     # Run `brew bundle` if `check` returns missing dependencies
     if [[ $(grep missing "$BUNDLELOG" &> /dev/null; echo $?) -eq 0 ]]; then
@@ -128,7 +115,7 @@ brew_bundle()
 brew_update()
 {
   (brew update > "$UPDATELOG") &
-  spinner_hang "Update Homebrew formulae"
+  spinner "Update Homebrew formulae"
 
   if [[ $(wc -l "$UPDATELOG" | awk '{print $1}') -ge "2" ]]; then
     printf "${CLEARLINE}${CHECKMARK} Formulae updated\\n"
@@ -139,7 +126,7 @@ brew_update()
 brew_upgrade()
 {
   (brew outdated > "$OUTDATEDLOG") &
-  spinner_hang "Check for available upgrades"
+  spinner "Check for available upgrades"
 
   if [[ -s "$OUTDATEDLOG" ]]; then
     (brew upgrade --display-times > "$UPGRADELOG") &
@@ -175,12 +162,12 @@ main()
 
   # Cleanup
   (brew cleanup &> /dev/null) &
-  spinner_hang "Clean up"
+  spinner "Clean up"
 
   # Done
   printf "${CLEARLINE}${CHECKMARK} Homebrew up-to-date 🍺\\n"
 
-  find /tmp/ -empty -name "ghost.*" -delete
+  find /tmp/ -maxdepth 0 -empty -name "ghost.*" -delete
 }
 
 if [[ "$1" ]]; then
