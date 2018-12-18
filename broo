@@ -74,19 +74,12 @@ interrupt()
 
 print_install_log()
 {
-  awk '
-    tolower($0) ~ /installing/ { 
-      print "\033[34m|\033[0m " $2
-    }' "$INSTALLLOG"
+  awk 'tolower($0) ~ /installing/{print "\033[34m|\033[0m " $2}' "$INSTALLLOG"
 }
 
 print_upgrade_log()
 {
-  local UPGSUMMARY
-  
-  UPGSUMMARY=$(awk 'FNR == 2 {print}' "$UPGRADELOG" | sed $'s/, /\\\n/g' | column -t | awk '{print "\033[34m|\033[0m "$0}')
-
-  printf "${UPGSUMMARY}\\n"
+  awk 'FNR == 2 {gsub(", ", "\n"); print}' "$UPGRADELOG" | column -t | awk '{print "\033[34m|\033[0m "$0}'
 }
 
 # Brew Bundle
